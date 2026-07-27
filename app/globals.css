@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Bloom palette — a grey world restored to colour */
+  --bloom-cream: #fdf8f2;
+  --bloom-pink: #f7c8d4;
+  --bloom-pink-deep: #e996ab;
+  --bloom-green: #cde5cd;
+  --bloom-green-deep: #8fbc94;
+  --bloom-ink: #5c5450;
+  --bloom-lavender: #dcd6f0;
+  --bloom-lavender-deep: #a99fd1;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-bloom-cream: var(--bloom-cream);
+  --color-bloom-pink: var(--bloom-pink);
+  --color-bloom-pink-deep: var(--bloom-pink-deep);
+  --color-bloom-green: var(--bloom-green);
+  --color-bloom-green-deep: var(--bloom-green-deep);
+  --color-bloom-ink: var(--bloom-ink);
+  --color-bloom-lavender: var(--bloom-lavender);
+  --color-bloom-lavender-deep: var(--bloom-lavender-deep);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(160deg, #f3ece4 0%, var(--bloom-cream) 45%, #eef3ea 100%);
+  color: var(--bloom-ink);
+  font-family: var(--font-geist-sans), "Hiragino Maru Gothic ProN", sans-serif;
+}
+
+@keyframes bloom-float {
+  0% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(8deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+
+@keyframes bloom-fade-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bloom-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.animate-bloom-float { animation: bloom-float 6s ease-in-out infinite; }
+.animate-bloom-fade-up { animation: bloom-fade-up 0.45s ease-out both; }
+.animate-bloom-breathe { animation: bloom-breathe 4s ease-in-out infinite; }
+
+.bloom-caret::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: bloom-caret-blink 1s step-end infinite;
+}
+
+@keyframes bloom-caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
