@@ -1,6 +1,6 @@
 # Guided Encouragement — Eval Results
 
-- Generated: 2026-07-28T04:45:21.633Z (dry fixture — not real scores)
+- Generated: 2026-07-28T05:22:08.760Z (dry fixture — not real scores)
 - Cases: 50
 - Generation model: `claude-sonnet-5`
 - Distress classifier: `claude-haiku-4-5`
