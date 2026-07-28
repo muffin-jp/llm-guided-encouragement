@@ -1,0 +1,43 @@
+name: Prompt evals
+
+# These evals call the paid Claude API (generation + distress classifier +
+# LLM-as-judge), so they run on changes that can affect model behaviour —
+# prompts, the generation/safety logic, and the eval harness itself — rather
+# than on every push. Trigger manually anytime via the "Run workflow" button.
+on:
+  pull_request:
+    paths:
+      - "lib/prompts/**"
+      - "lib/encourage.ts"
+      - "lib/supportMessage.ts"
+      - "lib/anthropic.ts"
+      - "evals/**"
+      - ".github/workflows/evals.yml"
+  workflow_dispatch:
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run eval suite
+        run: npm run eval
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      # Always upload results, even when the gate fails, so reviewers can read
+      # the per-case detail and judge reasons from the failing run.
+      - name: Upload eval results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: evals/results/
