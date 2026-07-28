@@ -9,7 +9,7 @@ import {
   buildEncouragementUserMessage,
 } from "./prompts/encouragement";
 import { SUPPORT_MESSAGE } from "./supportMessage";
-import { sseEvent } from "./sse";
+import { sseEvent, type ResponseKind } from "./sse";
 import type { EncourageRequest } from "./validation";
 
 export const FRIENDLY_ERROR_MESSAGE =
@@ -68,6 +68,56 @@ export async function classifyDistress(
   return true;
 }
 
+/**
+ * Shared request params for the encouragement generation call, so the
+ * streaming route and the plain generator below can never drift apart — the
+ * eval harness exercises exactly what production runs.
+ */
+function encouragementParams(input: EncourageRequest) {
+  return {
+    model: GENERATION_MODEL,
+    max_tokens: 200,
+    // A 40-word reply needs no extended reasoning; disabling thinking keeps
+    // first-token latency low on the post-stage screen.
+    thinking: { type: "disabled" as const },
+    output_config: { effort: "low" as const },
+    system: ENCOURAGEMENT_SYSTEM_PROMPT,
+    messages: [
+      { role: "user" as const, content: buildEncouragementUserMessage(input) },
+    ],
+  };
+}
+
+export interface EncourageResult {
+  path: ResponseKind;
+  text: string;
+}
+
+/**
+ * The full two-step pipeline as a plain async function — no HTTP, no SSE — so
+ * the eval harness (and any other server code) can call the real safety
+ * routing and generation directly. The API route uses createEncourageStream
+ * below for token-by-token streaming; both share classifyDistress and
+ * encouragementParams, so what the evals test is what production ships.
+ */
+export async function generateEncouragement(
+  input: EncourageRequest,
+  client: Anthropic,
+): Promise<EncourageResult> {
+  if (await classifyDistress(client, input)) {
+    return { path: "support", text: SUPPORT_MESSAGE };
+  }
+  const message = await client.messages
+    .stream(encouragementParams(input))
+    .finalMessage();
+  const text = message.content
+    .filter((b): b is Anthropic.TextBlock => b.type === "text")
+    .map((b) => b.text)
+    .join("")
+    .trim();
+  return { path: "encouragement", text };
+}
+
 const encoder = new TextEncoder();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -106,18 +156,7 @@ export function createEncourageStream(
           }
         } else {
           emit("meta", { type: "encouragement" });
-          const stream = client.messages.stream({
-            model: GENERATION_MODEL,
-            max_tokens: 200,
-            // A 40-word reply needs no extended reasoning; disabling thinking
-            // keeps first-token latency low on the post-stage screen.
-            thinking: { type: "disabled" },
-            output_config: { effort: "low" },
-            system: ENCOURAGEMENT_SYSTEM_PROMPT,
-            messages: [
-              { role: "user", content: buildEncouragementUserMessage(input) },
-            ],
-          });
+          const stream = client.messages.stream(encouragementParams(input));
           for await (const event of stream) {
             if (
               event.type === "content_block_delta" &&
