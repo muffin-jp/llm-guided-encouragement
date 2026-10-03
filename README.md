@@ -192,6 +192,6 @@ Other scripts: `npm test` (unit tests — validation and distress routing, Anthr
 
 ## Roadmap
 
-- **Automated eval harness in CI — done.** Regression tests for the distress classifier and Mamorin's tone against a labelled 50-case dataset, gated in GitHub Actions. See [Evals](#evals).
+- **Automated eval harness in CI — done.** Regression tests for the distress classifier and Mamorin's tone against a labelled 50-case dataset, gated in GitHub Actions. See [Evals](https://github.com/muffin-jp/llm-guided-encouragement/pull/2).
 - **Japanese localization** — the `locale` field is already in the contract.
 - **Unity client integration** — wire Bloom's post-stage screen to this endpoint using the streaming pattern above.
